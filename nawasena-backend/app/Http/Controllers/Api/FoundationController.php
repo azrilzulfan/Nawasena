@@ -11,7 +11,7 @@ class FoundationController extends Controller
 {
     /**
      * GET /api/foundations
-     * List all verified foundations. Supports optional filtering by name/area.
+     * Menampilkan daftar panti terverifikasi
      */
     public function index(Request $request): JsonResponse
     {
@@ -36,7 +36,7 @@ class FoundationController extends Controller
 
     /**
      * GET /api/foundations/nearby?lat=&lng=&radius=
-     * Find verified foundations within a given radius (meters) using MongoDB $near.
+     * Mencari panti terdekat via GPS.
      */
     public function nearby(Request $request): JsonResponse
     {
@@ -50,11 +50,11 @@ class FoundationController extends Controller
 
         $foundations = Foundation::where('is_verified', true)
             ->where('location', 'near', [
-                'geometry' => [
+                '$geometry' => [
                     'type'        => 'Point',
                     'coordinates' => [(float) $request->lng, (float) $request->lat],
                 ],
-                'maxDistance' => $radius,
+                '$maxDistance' => $radius,
             ])
             ->get();
 
@@ -67,17 +67,30 @@ class FoundationController extends Controller
 
     /**
      * GET /api/foundations/{id}
-     * Show a single foundation's details.
+     * Menampilkan detail informasi panti.
      */
     public function show(string $id): JsonResponse
     {
-        $foundation = Foundation::findOrFail($id);
+        $query = Foundation::where('_id', $id);
+
+        if (strlen($id) === 24 && ctype_xdigit($id)) {
+            $query->orWhere('_id', new \MongoDB\BSON\ObjectId($id));
+        } else {
+            $query->orWhere('name', $id);
+        }
+
+        $foundation = $query->first();
+
+        if (!$foundation) {
+            return response()->json(['message' => "Panti asuhan [{$id}] tidak ditemukan."], 404);
+        }
+
         return response()->json($foundation);
     }
 
     /**
      * POST /api/foundations
-     * Register a new foundation (pending verification).
+     * Mendaftarkan panti asuhan baru.
      */
     public function store(Request $request): JsonResponse
     {
@@ -133,67 +146,68 @@ class FoundationController extends Controller
 
     /**
      * PUT /api/foundations/{id}
-     * Update foundation profile. Only the foundation admin can do this.
+     * Mengubah informasi profil panti.
      */
     public function update(Request $request, string $id): JsonResponse
     {
-        $foundation = Foundation::findOrFail($id);
+        $query = Foundation::where('_id', $id);
+        if (strlen($id) === 24 && ctype_xdigit($id)) {
+            $query->orWhere('_id', new \MongoDB\BSON\ObjectId($id));
+        } else {
+            $query->orWhere('name', $id);
+        }
 
-        if ($foundation->admin_id != $request->user()->id
-            && $request->user()->role !== 'foundation_admin') {
+        $foundation = $query->first();
+
+        if (!$foundation) {
+            return response()->json(['message' => "Panti asuhan tidak ditemukan."], 404);
+        }
+
+        if ($foundation->admin_id != $request->user()->id && $request->user()->role !== 'foundation_admin') {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
         $validated = $request->validate([
-            'name'            => 'sometimes|string|max:255',
-            'description'     => 'sometimes|string',
-            'address'         => 'sometimes|string',
-            'contact_phone'   => 'sometimes|string',
-            'verification_docs'=> 'sometimes|array',
-            'bank_account'    => 'sometimes|array',
+            'name'          => 'sometimes|string|max:255',
+            'description'   => 'sometimes|string',
+            'address'       => 'sometimes|string',
+            'contact_phone' => 'sometimes|string',
         ]);
 
         $foundation->update($validated);
-
-        return response()->json([
-            'message'    => 'Foundation updated',
-            'foundation' => $foundation->fresh(),
-        ]);
+        return response()->json(['message' => 'Foundation updated', 'foundation' => $foundation->fresh()]);
     }
 
     /**
      * PATCH /api/foundations/{id}/verify
-     * Verify a foundation registration. Super-admin only.
+     * Memverifikasi pendaftaran panti.
      */
     public function verify(Request $request, string $id): JsonResponse
     {
         if ($request->user()->role !== 'admin') {
-            return response()->json(['message' => 'Forbidden. Only system admins can verify foundations.'], 403);
+            return response()->json(['message' => 'Forbidden'], 403);
         }
 
-        if ($id === 'undefined' || empty($id)) {
-            return response()->json(['message' => 'Format ID Panti tidak valid atau tidak disertakan.'], 400);
+        $query = Foundation::where('_id', $id);
+        if (strlen($id) === 24 && ctype_xdigit($id)) {
+            $query->orWhere('_id', new \MongoDB\BSON\ObjectId($id));
+        } else {
+            $query->orWhere('name', $id);
         }
 
-        $foundation = Foundation::find($id);
+        $foundation = $query->first();
 
         if (!$foundation) {
-            return response()->json([
-                'message' => "Panti asuhan dengan ID [{$id}] tidak ditemukan di sistem."
-            ], 404);
+            return response()->json(['message' => "Panti asuhan tidak ditemukan."], 404);
         }
 
         $foundation->update(['is_verified' => true]);
-
-        return response()->json([
-            'message'    => 'Foundation verified successfully',
-            'foundation' => $foundation,
-        ]);
+        return response()->json(['message' => 'Foundation verified successfully', 'foundation' => $foundation]);
     }
 
     /**
      * DELETE /api/foundations/{id}
-     * Remove a foundation from the system.
+     * Menghapus data panti dari sistem.
      */
     public function destroy(Request $request, string $id): JsonResponse
     {
@@ -201,31 +215,49 @@ class FoundationController extends Controller
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
-        Foundation::findOrFail($id)->delete();
+        $query = Foundation::where('_id', $id);
+        if (strlen($id) === 24 && ctype_xdigit($id)) {
+            $query->orWhere('_id', new \MongoDB\BSON\ObjectId($id));
+        } else {
+            $query->orWhere('name', $id);
+        }
 
+        $foundation = $query->first();
+
+        if (!$foundation) {
+            return response()->json(['message' => "Panti asuhan tidak ditemukan."], 404);
+        }
+
+        $foundation->delete();
         return response()->json(['message' => 'Foundation deleted']);
     }
 
     /**
      * GET /api/foundations/{id}/analytics
-     * Aggregated statistics: donations, volunteers, inventory summary.
+     * Menampilkan ringkasan statistik donasi, relawan, dan stok panti.
      */
     public function analytics(string $id): JsonResponse
     {
-        Foundation::findOrFail($id);
+        $query = Foundation::where('_id', $id);
+        if (strlen($id) === 24 && ctype_xdigit($id)) {
+            $query->orWhere('_id', new \MongoDB\BSON\ObjectId($id));
+        } else {
+            $query->orWhere('name', $id);
+        }
 
-        $donationsByStatus = Donation::where('foundation_id', $id)
-            ->get(['status'])
-            ->groupBy('status')
-            ->map(fn($g) => $g->count());
+        $foundation = $query->first();
 
-        $inventorySummary = Inventory::where('foundation_id', $id)
-            ->get(['item_name', 'current_qty', 'target_qty', 'urgent_level']);
+        if (!$foundation) {
+            return response()->json(['message' => "Data analitik panti tidak ditemukan."], 404);
+        }
 
+        // Ambil ID string asli hasil ekstraksi database untuk query relasi ke tabel lain
+        $realId = $foundation->id;
+
+        $donationsByStatus = Donation::where('foundation_id', $realId)->get(['status'])->groupBy('status')->map(fn($g) => $g->count());
+        $inventorySummary = Inventory::where('foundation_id', $realId)->get(['item_name', 'current_qty', 'target_qty', 'urgent_level']);
         $urgentItems = $inventorySummary->where('urgent_level', 'high')->count();
-
-        $totalVolunteers = Workshop::where('foundation_id', $id)
-            ->sum('mentor_registered_count');
+        $totalVolunteers = Workshop::where('foundation_id', $realId)->sum('mentor_registered_count');
 
         return response()->json([
             'donations' => [
@@ -239,7 +271,7 @@ class FoundationController extends Controller
             ],
             'volunteers' => [
                 'total_registered' => $totalVolunteers,
-                'total_workshops'  => Workshop::where('foundation_id', $id)->count(),
+                'total_workshops'  => Workshop::where('foundation_id', $realId)->count(),
             ],
         ]);
     }

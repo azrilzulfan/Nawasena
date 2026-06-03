@@ -11,12 +11,11 @@ class InventoryController extends Controller
 {
     /**
      * GET /api/inventories
-     * List all inventory items across all foundations.
-     * Supports filtering by category, urgent_level, and foundation_id.
+     * Menampilkan daftar kebutuhan panti.
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Inventory::query();
+        $query = Inventory::with('foundation')->orderBy('created_at', 'desc');
 
         if ($request->filled('category')) {
             $query->where('category', $request->category);
@@ -27,22 +26,33 @@ class InventoryController extends Controller
         }
 
         if ($request->filled('foundation_id')) {
-            $query->where('foundation_id', $request->foundation_id);
-        }
+        $fId = $request->foundation_id;
+
+        $query->where(function($q) use ($fId) {
+            $q->where('foundation_id', $fId);
+            if (strlen($fId) === 24 && ctype_xdigit($fId)) {
+                $q->orWhere('foundation_id', new \MongoDB\BSON\ObjectId($fId));
+            }
+        });
+    }
 
         return response()->json($query->paginate(20));
     }
 
     /**
      * GET /api/foundations/{id}/inventories
-     * List all inventory items belonging to a specific foundation.
+     * Menampilkan stok/kebutuhan panti tertentu.
      */
     public function byFoundation(Request $request, string $id): JsonResponse
     {
-        Foundation::findOrFail($id);
+        $foundation = Foundation::where('_id', $id)->first();
+
+        if (!$foundation) {
+            return response()->json(['message' => 'Foundation not found'], 404);
+        }
 
         $items = Inventory::where('foundation_id', $id)
-            ->orderBy('urgent_level')
+            ->orderBy('urgent_level', 'asc') // Hindari sort kosong tanpa parameter arah
             ->get();
 
         return response()->json($items);
@@ -50,20 +60,30 @@ class InventoryController extends Controller
 
     /**
      * GET /api/inventories/{id}
-     * Show a single inventory item's detail.
+     * Melihat detail item inventori.
      */
     public function show(string $id): JsonResponse
     {
-        return response()->json(Inventory::findOrFail($id));
+        $inventory = Inventory::where('_id', $id)->first();
+
+        if (!$inventory) {
+            return response()->json(['message' => 'Inventory item not found'], 404);
+        }
+
+        return response()->json($inventory);
     }
 
     /**
      * POST /api/foundations/{id}/inventories
-     * Add a new inventory item/need to a foundation.
+     * Menambahkan item kebutuhan baru.
      */
     public function store(Request $request, string $id): JsonResponse
     {
-        Foundation::findOrFail($id);
+        $foundation = Foundation::where('_id', $id)->first();
+
+        if (!$foundation) {
+            return response()->json(['message' => 'Foundation not found'], 404);
+        }
 
         $validated = $request->validate([
             'item_name'   => 'required|string|max:255',
@@ -89,11 +109,16 @@ class InventoryController extends Controller
 
     /**
      * PUT /api/inventories/{id}
-     * Update an existing inventory item's details.
+     * Mengubah detail item inventori.
      */
     public function update(Request $request, string $id): JsonResponse
     {
-        $item = Inventory::findOrFail($id);
+        // Ganti findOrFail menjadi pencarian berbasis MongoDB _id
+        $item = Inventory::where('_id', $id)->first();
+
+        if (!$item) {
+            return response()->json(['message' => 'Inventory item not found'], 404);
+        }
 
         $validated = $request->validate([
             'item_name'   => 'sometimes|string|max:255',
@@ -115,11 +140,19 @@ class InventoryController extends Controller
 
     /**
      * DELETE /api/inventories/{id}
-     * Remove an inventory item from the list.
+     * Menghapus item dari daftar inventori.
      */
     public function destroy(string $id): JsonResponse
     {
-        Inventory::findOrFail($id)->delete();
+        // Ganti findOrFail menjadi pencarian berbasis MongoDB _id
+        $item = Inventory::where('_id', $id)->first();
+
+        if (!$item) {
+            return response()->json(['message' => 'Inventory item not found'], 404);
+        }
+
+        $item->delete();
+
         return response()->json(['message' => 'Item deleted']);
     }
 }

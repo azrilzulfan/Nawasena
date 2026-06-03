@@ -1,5 +1,4 @@
 // src/lib/api.js
-
 const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://nawasena-backend.test/api';
 
 function getToken() {
@@ -23,8 +22,9 @@ async function request(method, path, body = null) {
 
   if (res.status === 401) {
     localStorage.removeItem('nawasena_token');
-    window.location.href = '/login';
-    return;
+    const err = new Error('Sesi Anda telah berakhir. Silakan masuk kembali.');
+    err.code = 'UNAUTHORIZED';
+    throw err;
   }
 
   const data = await res.json();
@@ -33,9 +33,9 @@ async function request(method, path, body = null) {
 }
 
 export const api = {
-  get:   (path)         => request('GET', path),
-  post:  (path, body)   => request('POST', path, body),
-  put:   (path, body)   => request('PUT', path, body),
-  patch: (path, body)   => request('PATCH', path, body),
-  del:   (path)         => request('DELETE', path),
+  get:   (path)       => request('GET',    path),
+  post:  (path, body) => request('POST',   path, body),
+  put:   (path, body) => request('PUT',    path, body),
+  patch: (path, body) => request('PATCH',  path, body),
+  del:   (path)       => request('DELETE', path),
 };

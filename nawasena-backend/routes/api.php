@@ -37,7 +37,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Uploads
     Route::post('/uploads', [UploadController::class, 'store']);
 
-    // Foundations (write)
+    // Foundations
     Route::post('/foundations', [FoundationController::class, 'store']);
     Route::put('/foundations/{id}', [FoundationController::class, 'update']);
     Route::patch('/foundations/{id}/verify', [FoundationController::class, 'verify']);

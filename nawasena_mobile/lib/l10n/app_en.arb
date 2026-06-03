@@ -1,0 +1,98 @@
+{
+  "@@locale": "en",
+
+  "appName": "Nawasena",
+  "greeting_morning": "Good Morning",
+  "greeting_afternoon": "Good Afternoon",
+  "greeting_evening": "Good Evening",
+  "greeting_night": "Good Night",
+
+  "btn_login": "Sign In",
+  "btn_register": "Register",
+  "btn_logout": "Sign Out",
+  "btn_save": "Save Changes",
+  "btn_retry": "Try Again",
+  "btn_cancel": "Cancel",
+  "btn_donate_now": "Donate Now",
+  "btn_join_workshop": "Register as Volunteer",
+  "btn_checkin": "Confirm Check-in",
+  "btn_mark_sent": "Mark as Sent",
+
+  "label_email": "Email",
+  "label_password": "Password",
+  "label_full_name": "Full Name",
+  "label_confirm_password": "Confirm Password",
+  "label_role": "Role",
+  "label_donor": "Donor",
+  "label_volunteer": "Volunteer",
+
+  "role_donor_desc": "Donate goods & supplies to orphanages",
+  "role_volunteer_desc": "Join social activities & workshops",
+
+  "nav_home": "Home",
+  "nav_explore": "Explore",
+  "nav_history": "History",
+  "nav_profile": "Profile",
+
+  "urgent_high": "Urgent",
+  "urgent_medium": "Moderate",
+  "urgent_low": "Low",
+
+  "status_pending": "Pending",
+  "status_sent": "Sent",
+  "status_received": "Received",
+  "status_verified": "Verified",
+
+  "workshop_open": "Open",
+  "workshop_closed": "Closed",
+  "workshop_done": "Done",
+
+  "category_logistik": "Logistics",
+  "category_edukasi": "Education",
+  "category_medis": "Medical",
+
+  "error_network": "Cannot reach server. Check your internet connection.",
+  "error_unauthorized": "Session expired. Please sign in again.",
+  "error_not_found": "Resource not found.",
+  "error_validation": "Please check the data you entered.",
+  "error_server": "Server error. Please try again later.",
+
+  "validator_required": "{field} is required.",
+  "@validator_required": {
+    "placeholders": {
+      "field": { "type": "String" }
+    }
+  },
+  "validator_email_invalid": "Invalid email format.",
+  "validator_password_min": "Password must be at least 8 characters.",
+  "validator_password_mismatch": "Passwords do not match.",
+  "validator_positive_number": "{field} must be greater than 0.",
+  "@validator_positive_number": {
+    "placeholders": {
+      "field": { "type": "String" }
+    }
+  },
+
+  "donation_pledge_success": "Donation submitted successfully!",
+  "donation_status_updated": "Donation status updated!",
+  "profile_update_success": "Profile updated successfully!",
+  "workshop_register_success": "Registered as volunteer successfully!",
+  "workshop_unregister_success": "Registration cancelled.",
+  "checkin_success": "Check-in confirmed successfully!",
+  "copied_to_clipboard": "Copied to clipboard!",
+
+  "geofence_inside": "You are within the check-in area!",
+  "geofence_outside": "You are outside the check-in area",
+  "geofence_move_closer": "Move {distance} meters closer to the workshop location.",
+  "@geofence_move_closer": {
+    "placeholders": {
+      "distance": { "type": "String" }
+    }
+  },
+
+  "impact_total_donations": "Total Donations",
+  "impact_foundations_helped": "Foundations Helped",
+  "impact_items_sent": "Items Sent",
+  "impact_workshops_attended": "Workshops Attended",
+  "impact_volunteer_hours": "Volunteer Hours"
+}

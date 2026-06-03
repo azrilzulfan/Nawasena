@@ -1,122 +1,142 @@
 // src/components/layout/Sidebar.jsx
 import { useState } from 'react';
+import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, Building2, CheckSquare, BarChart3, Users, Heart,
   HandHelping, Boxes, BookOpen, CalendarCheck, UserCircle, LogOut,
   X, ChevronDown,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import ConfirmDialog from '../ui/ConfirmDialog';
+import logoNawasena from '../../assets/Logo.png'
 
 const NAV_ITEMS = [
   {
     label: 'Beranda',
     children: [
-      { key: 'overview', label: 'Pusat Analitik', icon: LayoutDashboard },
+      { to: '/admin', label: 'Pusat Analitik', icon: LayoutDashboard },
     ],
   },
   {
     label: 'Panti Asuhan',
     children: [
-      { key: 'foundation-queue',     label: 'Antrean Verifikasi', icon: CheckSquare },
-      { key: 'foundation-list',      label: 'Daftar Panti',       icon: Building2 },
-      { key: 'foundation-analytics', label: 'Statistik Panti',    icon: BarChart3 },
+      { to: '/admin/foundation-queue',     label: 'Antrean Verifikasi', icon: CheckSquare },
+      { to: '/admin/foundation-list',      label: 'Daftar Panti',       icon: Building2 },
+      { to: '/admin/foundation-analytics', label: 'Statistik Panti',    icon: BarChart3 },
     ],
   },
   {
     label: 'Pengguna',
     children: [
-      { key: 'donors',            label: 'Data Donatur',    icon: Heart },
-      { key: 'volunteers',        label: 'Data Relawan',    icon: HandHelping },
-      { key: 'foundation-admins', label: 'Data Pengelola',  icon: Users },
+      { to: '/admin/donors',            label: 'Data Donatur',   icon: Heart },
+      { to: '/admin/volunteers',        label: 'Data Relawan',   icon: HandHelping },
+      { to: '/admin/foundation-admins', label: 'Data Pengelola', icon: Users },
     ],
   },
   {
     label: 'Logistik & Transparansi',
     children: [
-      { key: 'inventories', label: 'Kebutuhan Nasional', icon: Boxes },
-      { key: 'donations',   label: 'Ledger Donasi',      icon: BookOpen },
+      { to: '/admin/inventories', label: 'Kebutuhan Nasional', icon: Boxes },
+      { to: '/admin/donations',   label: 'Ledger Donasi',      icon: BookOpen },
     ],
   },
   {
     label: 'Aktivitas',
     children: [
-      { key: 'workshops', label: 'Pantau Workshop', icon: CalendarCheck },
+      { to: '/admin/workshops', label: 'Pantau Workshop', icon: CalendarCheck },
     ],
   },
   {
     label: 'Pengaturan',
     children: [
-      { key: 'profile', label: 'Profil Admin', icon: UserCircle },
+      { to: '/admin/profile', label: 'Profil Admin', icon: UserCircle },
     ],
   },
 ];
 
-function NavGroup({ group, activePage, onNavigate }) {
+function NavGroup({ group, onClose }) {
   const [open, setOpen] = useState(true);
   return (
     <div className="mb-1">
       <button
         onClick={() => setOpen(o => !o)}
-        className="flex items-center justify-between w-full px-3 py-1.5 text-xs font-semibold text-slate-400 uppercase tracking-wider hover:text-slate-600"
+        className="flex items-center justify-between w-full px-3 py-1.5 text-xs font-semibold text-text-muted uppercase tracking-wider hover:text-accent"
       >
         {group.label}
         <ChevronDown size={13} className={`transition-transform ${open ? '' : '-rotate-90'}`} />
       </button>
       {open && group.children.map(item => {
         const Icon = item.icon;
-        const active = activePage === item.key;
         return (
-          <button
-            key={item.key}
-            onClick={() => onNavigate(item.key)}
-            className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium transition-all mb-0.5
-              ${active
-                ? 'bg-emerald-50 text-emerald-700 shadow-sm'
-                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800'
-              }`}
+          <NavLink
+            key={item.to}
+            to={item.to}
+            end
+            onClick={onClose}
+            className={({ isActive }) =>
+              `flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium transition-all mb-0.5 ${
+                isActive
+                  ? 'bg-secondary/10 text-primary shadow-sm'
+                  : 'text-accent hover:bg-slate-50 hover:text-accent-hover'
+              }`
+            }
           >
-            <Icon size={16} className={active ? 'text-emerald-600' : 'text-slate-400'} />
-            {item.label}
-          </button>
+            {({ isActive }) => (
+              <>
+                <Icon size={16} className={isActive ? 'text-primary' : 'text-text-muted'} />
+                {item.label}
+              </>
+            )}
+          </NavLink>
         );
       })}
     </div>
   );
 }
 
-export default function Sidebar({ activePage, onNavigate, isOpen, onClose }) {
+export default function Sidebar({ isOpen, onClose }) {
   const { user, logout } = useAuth();
+  const [logoutConfirm, setLogoutConfirm] = useState(false);
 
-  const handleLogout = async () => {
-    if (confirm('Yakin ingin keluar dari sistem?')) {
-      await logout();
-    }
+  const handleLogoutConfirm = async () => {
+    setLogoutConfirm(false);
+    await logout();
   };
 
   const initials = user?.full_name?.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() ?? 'SA';
 
   return (
     <>
+      {logoutConfirm && (
+        <ConfirmDialog
+          title="Keluar dari Sistem?"
+          message="Sesi Anda akan diakhiri dan Anda perlu login kembali."
+          confirmLabel="Ya, Keluar"
+          danger
+          onConfirm={handleLogoutConfirm}
+          onCancel={() => setLogoutConfirm(false)}
+        />
+      )}
       {isOpen && (
         <div className="fixed inset-0 bg-black/40 z-30 lg:hidden" onClick={onClose} />
       )}
       <aside className={`
-        fixed top-0 left-0 h-full w-64 bg-white border-r border-slate-100 z-40 flex flex-col
+        fixed top-0 left-0 h-full w-64 bg-white border-r border-muted z-40 flex flex-col
         transform transition-transform duration-300 ease-in-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
         lg:translate-x-0 lg:static lg:z-auto
       `}>
-        <div className="flex items-center justify-between px-5 py-5 border-b border-slate-100">
+        <div className="flex items-center justify-between px-5 py-5 border-b border-muted">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center">
-              <span className="text-white font-bold text-sm">N</span>
+            <div className="w-8 h-8 flex items-center justify-center">
+              <img src={logoNawasena} alt="Nawasena" />
             </div>
             <div>
-              <p className="font-bold text-slate-800 text-sm leading-tight">Nawasena</p>
-              <p className="text-xs text-slate-400 capitalize">{user?.role ?? 'Admin'}</p>
+              <p className="font-bold text-accent text-sm leading-tight">Nawasena</p>
+              <p className="text-xs text-text-muted capitalize">{user?.role ?? 'Admin'}</p>
             </div>
           </div>
-          <button onClick={onClose} className="lg:hidden text-slate-400 hover:text-slate-600">
+          <button onClick={onClose} className="lg:hidden text-text-muted hover:text-accent">
             <X size={18} />
           </button>
         </div>
@@ -126,15 +146,14 @@ export default function Sidebar({ activePage, onNavigate, isOpen, onClose }) {
             <NavGroup
               key={group.label}
               group={group}
-              activePage={activePage}
-              onNavigate={(key) => { onNavigate(key); onClose(); }}
+              onClose={onClose}
             />
           ))}
         </nav>
 
-        <div className="px-3 py-4 border-t border-slate-100">
+        <div className="px-3 py-4 border-t border-muted">
           <button
-            onClick={handleLogout}
+            onClick={() => setLogoutConfirm(true)}
             className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-rose-500 hover:bg-rose-50 transition-all"
           >
             <LogOut size={16} />

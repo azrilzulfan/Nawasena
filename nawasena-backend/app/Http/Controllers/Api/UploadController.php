@@ -12,12 +12,7 @@ class UploadController extends Controller
 {
     /**
      * POST /api/uploads
-     * Upload an image file to Google Cloud Storage.
-     * Returns the public URL to be stored in the relevant document field.
-     *
-     * Request body (multipart/form-data):
-     *   - file:   (required) image file, max 5MB
-     *   - folder: (optional) avatars | foundations | donations | docs
+     * Mengunggah file gambar ke storage.
      */
     public function store(Request $request): JsonResponse
     {

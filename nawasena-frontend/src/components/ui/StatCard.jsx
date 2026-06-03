@@ -9,14 +9,14 @@ const colorMap = {
 
 export default function StatCard({ icon: Icon, label, value, sub, color = 'emerald' }) {
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 p-5 flex items-center gap-4 shadow-sm">
+    <div className="bg-white rounded-2xl border border-muted p-5 flex items-center gap-4 shadow-sm">
       <div className={`p-3 rounded-xl ${colorMap[color]}`}>
         <Icon size={22} />
       </div>
       <div>
-        <p className="text-xs text-slate-500 font-medium">{label}</p>
-        <p className="text-2xl font-bold text-slate-800">{value ?? '—'}</p>
-        {sub && <p className="text-xs text-slate-400 mt-0.5">{sub}</p>}
+        <p className="text-xs text-text-muted font-medium">{label}</p>
+        <p className="text-2xl font-bold text-accent">{value ?? '—'}</p>
+        {sub && <p className="text-xs text-text-muted mt-0.5">{sub}</p>}
       </div>
     </div>
   );

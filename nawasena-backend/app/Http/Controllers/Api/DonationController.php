@@ -13,44 +13,52 @@ class DonationController extends Controller
 {
     /**
      * GET /api/donations
-     * List all donations (admin view). Supports filtering by status and foundation.
+     * Menampilkan seluruh riwayat donasi.
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Donation::orderBy('created_at', 'desc');
+        $query = Donation::with('foundation')->orderBy('created_at', 'desc');
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
         if ($request->filled('foundation_id')) {
-            $query->where('foundation_id', $request->foundation_id);
-        }
+        $fId = $request->foundation_id;
+
+        $query->where(function($q) use ($fId) {
+            $q->where('foundation_id', $fId);
+            if (strlen($fId) === 24 && ctype_xdigit($fId)) {
+                $q->orWhere('foundation_id', new \MongoDB\BSON\ObjectId($fId));
+            }
+        });
+    }
 
         return response()->json($query->paginate(20));
     }
 
     /**
      * GET /api/donations/me
-     * List the authenticated donor's own donation history.
+     * Menampilkan riwayat donasi pribadi.
      */
     public function mine(Request $request): JsonResponse
     {
         $donations = Donation::where('donor_id', $request->user()->id)
-            ->latest()
-            ->paginate(15);
+        ->orderBy('created_at', 'desc')
+        ->paginate(15);
 
-        return response()->json($donations);
+    return response()->json($donations);
     }
 
     /**
      * GET /api/foundations/{id}/donations
-     * List all donations received by a specific foundation.
+     * Menampilkan donasi yang diterima panti.
      */
     public function byFoundation(string $id): JsonResponse
     {
         $donations = Donation::where('foundation_id', $id)
-            ->latest()
+            ->orWhere('foundation_id', new \MongoDB\BSON\ObjectId($id))
+            ->orderBy('created_at', 'desc')
             ->paginate(15);
 
         return response()->json($donations);
@@ -58,7 +66,7 @@ class DonationController extends Controller
 
     /**
      * GET /api/donations/{id}
-     * Show a single donation's full detail including history_logs timeline.
+     * Melihat detail transaksi donasi.
      */
     public function show(Request $request, string $id): JsonResponse
     {
@@ -74,7 +82,7 @@ class DonationController extends Controller
 
     /**
      * POST /api/donations
-     * Create a new donation pledge. Generates a unique QR hash for tracking.
+     * Membuat pengajuan donasi baru.
      */
     public function store(Request $request): JsonResponse
     {
@@ -102,7 +110,7 @@ class DonationController extends Controller
             'history_logs' => [[
                 'status'    => 'pending',
                 'timestamp' => now()->toISOString(),
-                'note'      => 'Donation pledge created by donor',
+                'note'      => 'Donasi yang dibuat oleh donatur',
             ]],
         ]);
 
@@ -114,35 +122,74 @@ class DonationController extends Controller
 
     /**
      * PATCH /api/donations/{id}/status
-     * Manually update donation status (e.g., from 'pending' to 'sent').
-     * Automatically appends an entry to history_logs.
+     * Mengubah status progres donasi.
      */
     public function updateStatus(Request $request, string $id): JsonResponse
     {
+        if ($id === 'undefined' || empty($id)) {
+            return response()->json([
+                'message' => 'Gagal memperbarui status: ID Donasi tidak valid (undefined).'
+            ], 400);
+        }
+
         $request->validate([
             'status'      => 'required|in:pending,sent,received,verified',
             'note'        => 'nullable|string',
             'proof_image' => 'nullable|url',
         ]);
 
-        $donation = Donation::findOrFail($id);
+        $query = Donation::where('_id', $id);
+        if (strlen($id) === 24 && ctype_xdigit($id)) {
+            $query->orWhere('_id', new \MongoDB\BSON\ObjectId($id));
+        }
+        $donation = $query->first();
+
+        if (!$donation) {
+            return response()->json(['message' => 'Data transaksi donasi tidak ditemukan.'], 404);
+        }
+
+        $oldStatus = $donation->status;
+        $newStatus = $request->status;
+
+        if ($oldStatus === 'verified' && $newStatus === 'verified') {
+            return response()->json(['message' => 'Donasi ini sudah berstatus terverifikasi.'], 409);
+        }
+
+        if ($newStatus === 'verified' && $oldStatus !== 'verified') {
+            $invId = $donation->inventory_id;
+
+            $inventoryQuery = Inventory::where('_id', $invId);
+            if (strlen($invId) === 24 && ctype_xdigit($invId)) {
+                $inventoryQuery->orWhere('_id', new \MongoDB\BSON\ObjectId($invId));
+            }
+            $inventory = $inventoryQuery->first();
+
+            if ($inventory) {
+                $qtyToAdd = (int) ($donation->item_detail['qty'] ?? 0);
+
+                $inventory->increment('current_qty', $qtyToAdd);
+            }
+        }
+
+        $donation->update(['status' => $newStatus]);
+
         $donation->addHistoryLog(
-            $request->status,
-            $request->input('note', 'Status updated'),
+            $newStatus,
+            $request->input('note', "Status donasi diperbarui menjadi " . $newStatus),
             $request->proof_image
         );
 
-        event(new DonationStatusUpdated($donation));
+        event(new DonationStatusUpdated($donation->fresh()));
 
         return response()->json([
-            'message'  => 'Status updated',
+            'message'  => 'Status donasi berhasil diperbarui dan stok inventori telah disesuaikan.',
             'donation' => $donation->fresh(),
         ]);
     }
 
     /**
      * GET /api/donations/{id}/qr
-     * Return the QR code data (hash) for a donation. Only accessible by the donor.
+     * Mendapatkan kode QR serah terima.
      */
     public function getQr(Request $request, string $id): JsonResponse
     {
@@ -162,8 +209,7 @@ class DonationController extends Controller
 
     /**
      * POST /api/donations/verify-qr
-     * Verify a donation via QR code scan by the foundation admin.
-     * Atomically increments inventory stock and appends a verified log entry.
+     * Verifikasi donasi via QR dan pembaruan stok inventori otomatis.
      */
     public function verifyQr(Request $request): JsonResponse
     {
@@ -172,15 +218,27 @@ class DonationController extends Controller
             'proof_image'  => 'nullable|url',
         ]);
 
-        $donation = Donation::where('qr_code_hash', $request->qr_code_hash)
-            ->firstOrFail();
+        $hash = trim($request->qr_code_hash);
+
+        $donation = Donation::where('qr_code_hash', '=', $hash)->first();
+
+        if (!$donation) {
+            return response()->json([
+                'message' => "Data donasi tidak ditemukan. Token QR tidak cocok atau sudah kedaluwarsa.",
+                'debug_received_hash' => $hash
+            ], 404);
+        }
 
         if ($donation->status === 'verified') {
             return response()->json(['message' => 'This donation has already been verified'], 409);
         }
 
-        Inventory::where('_id', $donation->inventory_id)
-            ->increment('current_qty', $donation->item_detail['qty']);
+        $invId = $donation->inventory_id;
+        $inventory = Inventory::where('_id', $invId)->orWhere('_id', new \MongoDB\BSON\ObjectId($invId))->first();
+
+        if ($inventory) {
+            $inventory->increment('current_qty', (int) $donation->item_detail['qty']);
+        }
 
         $donation->addHistoryLog(
             'verified',

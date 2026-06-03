@@ -35,4 +35,9 @@ class Donation extends Model
             'history_logs' => $logs,
         ]);
     }
+
+    public function foundation()
+    {
+        return $this->belongsTo(Foundation::class, 'foundation_id');
+    }
 }

@@ -13,7 +13,7 @@ class AuthController extends Controller
 {
     /**
      * POST /api/auth/register
-     * Register a new user account.
+     * Registrasi akun pengguna baru.
      */
     public function register(Request $request): JsonResponse
     {
@@ -42,7 +42,7 @@ class AuthController extends Controller
 
     /**
      * POST /api/auth/login
-     * Authenticate a user and return a Sanctum token.
+     * Login pengguna untuk mendapatkan akses.
      */
     public function login(Request $request): JsonResponse
     {
@@ -72,17 +72,12 @@ class AuthController extends Controller
 
     /**
      * POST /api/auth/logout
-     * Revoke the current access token.
+     * Logout pengguna dari sistem.
      */
     public function logout(Request $request): JsonResponse
     {
         $request->user()->currentAccessToken()->delete();
 
         return response()->json(['message' => 'Logged out successfully']);
-    }
-
-    public function me(Request $request): JsonResponse
-    {
-        return response()->json($request->user());
     }
 }

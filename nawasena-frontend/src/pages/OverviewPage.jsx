@@ -22,7 +22,7 @@ export default function OverviewPage() {
   const [foundations, setFoundations] = useState([]);
   const [donations,   setDonations]   = useState([]);
   const [inventories, setInventories] = useState([]);
-  const [volunteers,  setVolunteers]  = useState([]);
+  const [volunteers,   setVolunteers]  = useState([]);
   const [loading, setLoading]         = useState(true);
   const [error,   setError]           = useState(null);
 
@@ -55,10 +55,10 @@ export default function OverviewPage() {
       <div className="space-y-6">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-24 bg-white rounded-2xl border border-slate-100 animate-pulse" />
+            <div key={i} className="h-24 bg-white rounded-2xl border border-muted animate-pulse" />
           ))}
         </div>
-        <div className="h-72 bg-white rounded-2xl border border-slate-100 animate-pulse" />
+        <div className="h-72 bg-white rounded-2xl border border-muted animate-pulse" />
       </div>
     );
   }
@@ -111,7 +111,7 @@ export default function OverviewPage() {
     : defaultCenter;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 font-sans">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard icon={TrendingUp} label="Total Donasi"   value={donations.length}   sub="Semua waktu" color="emerald" />
         <StatCard icon={Building2}  label="Panti Aktif"    value={foundations.length} sub="Terverifikasi" color="blue" />
@@ -120,8 +120,8 @@ export default function OverviewPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
-          <p className="text-sm font-semibold text-slate-700 mb-4">Tren Donasi Global</p>
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-muted p-5 shadow-sm">
+          <p className="text-sm font-semibold text-accent mb-4">Tren Donasi Global</p>
           {trendData.length > 0 ? (
             <ResponsiveContainer width="100%" height={220}>
               <AreaChart data={trendData}>
@@ -138,12 +138,12 @@ export default function OverviewPage() {
               </AreaChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-52 flex items-center justify-center text-slate-400 text-sm">Belum ada data donasi</div>
+            <div className="h-52 flex items-center justify-center text-text-muted text-sm">Belum ada data donasi</div>
           )}
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
-          <p className="text-sm font-semibold text-slate-700 mb-4">Kategori Inventori</p>
+        <div className="bg-white rounded-2xl border border-muted p-5 shadow-sm">
+          <p className="text-sm font-semibold text-accent mb-4">Kategori Inventori</p>
           {categoryData.length > 0 ? (
             <ResponsiveContainer width="100%" height={220}>
               <PieChart>
@@ -155,20 +155,20 @@ export default function OverviewPage() {
               </PieChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-52 flex items-center justify-center text-slate-400 text-sm">Belum ada data</div>
+            <div className="h-52 flex items-center justify-center text-text-muted text-sm">Belum ada data</div>
           )}
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
-        <p className="text-sm font-semibold text-slate-700 mb-3 flex items-center justify-between">
+      <div className="bg-white rounded-2xl border border-muted p-5 shadow-sm">
+        <p className="text-sm font-semibold text-accent mb-3 flex items-center justify-between">
           <span>Sebaran Panti Asuhan</span>
-          <span className="text-xs font-normal text-slate-400 bg-slate-50 px-2.5 py-1 rounded-full border border-slate-100">
+          <span className="text-xs font-normal text-text-muted bg-slate-50 px-2.5 py-1 rounded-full border border-muted">
             {validFoundations.length} panti aktif terpetakan
           </span>
         </p>
         
-        <div className="w-full h-64 rounded-xl overflow-hidden border border-slate-200 shadow-inner z-0 relative">
+        <div className="w-full h-64 rounded-xl overflow-hidden border border-muted shadow-inner z-0 relative">
           <MapContainer 
             center={mapCenter} 
             zoom={10} 
@@ -176,7 +176,7 @@ export default function OverviewPage() {
             scrollWheelZoom={true}
           >
             <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
             
@@ -191,14 +191,14 @@ export default function OverviewPage() {
                   <Popup maxWidth={250}>
                     <div className="p-0.5 font-sans">
                       <div className="flex items-center gap-1.5 mb-1">
-                        <Building2 size={14} className="text-emerald-600" />
-                        <h4 className="font-bold text-slate-800 m-0 text-xs leading-tight">{f.name}</h4>
+                        <Building2 size={14} className="text-primary" />
+                        <h4 className="font-bold text-accent m-0 text-xs leading-tight">{f.name}</h4>
                       </div>
-                      <p className="text-[11px] text-slate-600 m-0 mb-2 line-clamp-2">{f.address}</p>
+                      <p className="text-[11px] text-text-muted m-0 mb-2 line-clamp-2">{f.address}</p>
                       
-                      <div className="flex flex-col gap-1 border-t border-slate-100 pt-1.5 mt-1">
+                      <div className="flex flex-col gap-1 border-t border-muted pt-1.5 mt-1">
                         {f.contact_phone && (
-                          <span className="text-[10px] text-slate-500 flex items-center gap-1">
+                          <span className="text-[10px] text-text-muted flex items-center gap-1">
                             <Phone size={10} /> {f.contact_phone}
                           </span>
                         )}
@@ -206,7 +206,7 @@ export default function OverviewPage() {
                           href={`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`}
                           target="_blank"
                           rel="noreferrer"
-                          className="text-[10px] text-emerald-600 hover:underline font-medium flex items-center gap-0.5 mt-0.5"
+                          className="text-[10px] text-primary hover:text-primary-hover font-medium flex items-center gap-0.5 mt-0.5 transition-colors"
                         >
                           Buka di Google Maps <ExternalLink size={9} />
                         </a>

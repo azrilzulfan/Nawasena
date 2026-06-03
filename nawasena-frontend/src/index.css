@@ -1,16 +1,21 @@
-/* Hubungkan ke Google Fonts */
 @import url("https://fonts.googleapis.com" ) layer(base);
 @import url("https://fonts.gstatic.com") layer(base);
 @import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap") layer(base);
 
-/* Import core Tailwind CSS v4 */
 @import "tailwindcss";
 
 @theme {
-  /* Daftarkan font family ke Tailwind */
   --font-sans: "Plus Jakarta Sans", sans-serif;
   
-  /* Custom semantic colors */
-  --color-primary: oklch(0.696 0.17 162);       /* emerald-500 */
-  --color-primary-dark: oklch(0.527 0.154 150);  /* emerald-700 */
+  --color-primary: #5E7D6C;
+  --color-primary-hover: #4B6456;
+  
+  --color-secondary: #7DA690; 
+  --color-secondary-hover: #688F79;
+  
+  --color-accent: #2D3648; 
+  --color-accent-hover: #1E2532;
+
+  --color-muted: #E2E8F0;
+  --color-text-muted: #94A3B8;
 }

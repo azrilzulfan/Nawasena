@@ -5,9 +5,9 @@ import { api } from '../lib/api';
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user,    setUser]    = useState(null);
+  const [user,       setUser]       = useState(null);
   const [foundation, setFoundation] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading,    setLoading]    = useState(true);
 
   useEffect(() => {
     const token = localStorage.getItem('nawasena_token');
@@ -19,18 +19,16 @@ export function AuthProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    if (user?.role === 'foundation_admin' && user?.managed_foundation_id) {
-      api.get(`/foundations/${user.managed_foundation_id}`)
-        .then((data) => {
-          setFoundation(data.foundation ?? data);
-        })
-        .catch((err) => {
-          console.error("Gagal memuat status verifikasi panti:", err);
-          setFoundation(null);
-        });
-    } else {
+    if (user?.role !== 'foundation_admin' || !user?.managed_foundation_id) {
       setFoundation(null);
+      return;
     }
+    api.get(`/foundations/${user.managed_foundation_id}`)
+      .then(data => setFoundation(data.foundation ?? data))
+      .catch(err => {
+        console.error('Gagal memuat status verifikasi panti:', err);
+        setFoundation(null);
+      });
   }, [user?.managed_foundation_id, user?.role]);
 
   const login = async (email, password) => {
@@ -40,12 +38,12 @@ export function AuthProvider({ children }) {
     return data.user;
   };
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try { await api.post('/auth/logout'); } catch (_) {}
     localStorage.removeItem('nawasena_token');
     setUser(null);
     setFoundation(null);
-  };
+  }, []);
 
   const refreshUser = useCallback(async () => {
     try {
@@ -55,22 +53,26 @@ export function AuthProvider({ children }) {
     } catch (_) {}
   }, []);
 
-  const myFoundationId = user?.managed_foundation_id ?? null;
-  const isVerified = foundation?.is_verified ?? false;
+  useEffect(() => {
+    const handleUnauth = (e) => {
+      if (e?.reason?.code === 'UNAUTHORIZED') logout();
+    };
+    window.addEventListener('unhandledrejection', handleUnauth);
+    return () => window.removeEventListener('unhandledrejection', handleUnauth);
+  }, [logout]);
 
-  return (
-    <AuthContext.Provider value={{ 
-      user, 
-      foundation,      
-      isVerified,      
-      login, 
-      logout, 
-      refreshUser, 
-      myFoundationId 
-    }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  const value = {
+    user,
+    foundation,
+    loading,             
+    isVerified: foundation?.is_verified ?? false,
+    myFoundationId: user?.managed_foundation_id ?? null,
+    login,
+    logout,
+    refreshUser,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export const useAuth = () => useContext(AuthContext);

@@ -11,7 +11,7 @@ class UserController extends Controller
 {
     /**
      * GET /api/users
-     * Return all user's profile.
+     * Menampilkan seluruh profil pengguna.
      */
     public function index(Request $request): JsonResponse
     {
@@ -25,7 +25,6 @@ class UserController extends Controller
             $query->where('role', $request->role);
         }
 
-        // Jangan pernah expose password hash
         $users = $query->orderBy('created_at', 'desc')->paginate(20);
 
         $users->getCollection()->transform(fn ($u) => $u->makeHidden(['password', 'remember_token']));
@@ -35,7 +34,7 @@ class UserController extends Controller
 
     /**
      * GET /api/users/me
-     * Return the authenticated user's profile.
+     * Menampilkan profil pengguna aktif.
      */
     public function me(Request $request): JsonResponse
     {
@@ -44,7 +43,7 @@ class UserController extends Controller
 
     /**
      * PUT /api/users/me
-     * Update the authenticated user's profile.
+     * Mengubah profil pengguna aktif.
      */
     public function update(Request $request): JsonResponse
     {
@@ -53,12 +52,10 @@ class UserController extends Controller
         $validated = $request->validate([
             'full_name'                      => 'sometimes|string|max:255',
             'avatar_url'                     => 'sometimes|url',
-            // Volunteer-specific fields
             'volunteer_profile.skills'       => 'sometimes|array',
             'volunteer_profile.skills.*'     => 'string',
         ]);
 
-        // Merge volunteer_profile array carefully to avoid overwriting fields
         if ($request->has('volunteer_profile')) {
             $existing                    = $user->volunteer_profile ?? [];
             $validated['volunteer_profile'] = array_merge($existing, $request->input('volunteer_profile'));
@@ -74,13 +71,12 @@ class UserController extends Controller
 
     /**
      * GET /api/users/{id}
-     * Show public profile of another user.
+     * Menampilkan detail profil pengguna lain.
      */
     public function show(string $id): JsonResponse
     {
         $user = User::findOrFail($id);
 
-        // Only expose safe public fields
         return response()->json([
             'id'               => $user->id,
             'full_name'        => $user->full_name,
@@ -93,7 +89,7 @@ class UserController extends Controller
 
     /**
      * GET /api/users/{id}/portfolio
-     * Return aggregated social/impact data for a user's portfolio page.
+     * Menampilkan capaian sosial pengguna.
      */
     public function portfolio(string $id): JsonResponse
     {

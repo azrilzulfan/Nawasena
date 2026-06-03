@@ -23,4 +23,9 @@ class Inventory extends Model
     {
         $this->increment('current_qty', $qty);
     }
+
+    public function foundation()
+    {
+        return $this->belongsTo(Foundation::class, 'foundation_id');
+    }
 }

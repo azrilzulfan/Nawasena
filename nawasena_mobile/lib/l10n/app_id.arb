@@ -1,0 +1,100 @@
+{
+  "@@locale": "id",
+
+  "appName": "Nawasena",
+  "@appName": { "description": "Nama aplikasi" },
+
+  "greeting_morning": "Selamat Pagi",
+  "greeting_afternoon": "Selamat Siang",
+  "greeting_evening": "Selamat Sore",
+  "greeting_night": "Selamat Malam",
+
+  "btn_login": "Masuk",
+  "btn_register": "Daftar",
+  "btn_logout": "Keluar",
+  "btn_save": "Simpan Perubahan",
+  "btn_retry": "Coba Lagi",
+  "btn_cancel": "Batal",
+  "btn_donate_now": "Donasikan Sekarang",
+  "btn_join_workshop": "Daftar Sebagai Relawan",
+  "btn_checkin": "Konfirmasi Check-in",
+  "btn_mark_sent": "Tandai Sudah Dikirim",
+
+  "label_email": "Email",
+  "label_password": "Password",
+  "label_full_name": "Nama Lengkap",
+  "label_confirm_password": "Konfirmasi Password",
+  "label_role": "Peran",
+  "label_donor": "Donor",
+  "label_volunteer": "Relawan",
+
+  "role_donor_desc": "Donasikan barang & kebutuhan ke panti",
+  "role_volunteer_desc": "Ikuti kegiatan sosial & workshop panti",
+
+  "nav_home": "Beranda",
+  "nav_explore": "Jelajahi",
+  "nav_history": "Riwayat",
+  "nav_profile": "Profil",
+
+  "urgent_high": "Mendesak",
+  "urgent_medium": "Sedang",
+  "urgent_low": "Rendah",
+
+  "status_pending": "Menunggu",
+  "status_sent": "Dikirim",
+  "status_received": "Diterima",
+  "status_verified": "Terverifikasi",
+
+  "workshop_open": "Buka",
+  "workshop_closed": "Ditutup",
+  "workshop_done": "Selesai",
+
+  "category_logistik": "Logistik",
+  "category_edukasi": "Edukasi",
+  "category_medis": "Medis",
+
+  "error_network": "Tidak dapat terhubung ke server. Periksa koneksi internet Anda.",
+  "error_unauthorized": "Sesi telah berakhir. Silakan login kembali.",
+  "error_not_found": "Data tidak ditemukan.",
+  "error_validation": "Periksa kembali data yang Anda masukkan.",
+  "error_server": "Terjadi kesalahan pada server. Coba lagi nanti.",
+
+  "validator_required": "{field} tidak boleh kosong.",
+  "@validator_required": {
+    "placeholders": {
+      "field": { "type": "String" }
+    }
+  },
+  "validator_email_invalid": "Format email tidak valid.",
+  "validator_password_min": "Password minimal 8 karakter.",
+  "validator_password_mismatch": "Password tidak cocok.",
+  "validator_positive_number": "{field} harus lebih dari 0.",
+  "@validator_positive_number": {
+    "placeholders": {
+      "field": { "type": "String" }
+    }
+  },
+
+  "donation_pledge_success": "Donasi berhasil diajukan!",
+  "donation_status_updated": "Status donasi berhasil diperbarui!",
+  "profile_update_success": "Profil berhasil diperbarui!",
+  "workshop_register_success": "Berhasil mendaftar sebagai relawan!",
+  "workshop_unregister_success": "Pendaftaran berhasil dibatalkan.",
+  "checkin_success": "Check-in berhasil dikonfirmasi!",
+  "copied_to_clipboard": "Disalin ke clipboard!",
+
+  "geofence_inside": "Anda berada dalam area check-in!",
+  "geofence_outside": "Anda belum dalam area check-in",
+  "geofence_move_closer": "Dekati {distance} meter lagi ke lokasi workshop.",
+  "@geofence_move_closer": {
+    "placeholders": {
+      "distance": { "type": "String" }
+    }
+  },
+
+  "impact_total_donations": "Total Donasi",
+  "impact_foundations_helped": "Panti Dibantu",
+  "impact_items_sent": "Item Dikirim",
+  "impact_workshops_attended": "Workshop Diikuti",
+  "impact_volunteer_hours": "Jam Relawan"
+}
